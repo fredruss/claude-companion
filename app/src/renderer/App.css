@@ -1,0 +1,17 @@
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 20px;
+  gap: 10px;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+/* Ensure interactive elements aren't drag regions */
+.app-container * {
+  -webkit-app-region: no-drag;
+}

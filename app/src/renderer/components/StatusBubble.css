@@ -1,0 +1,81 @@
+.status-bubble {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  padding: 8px 12px;
+  max-width: 180px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: bubble-appear 0.3s ease-out;
+}
+
+@keyframes bubble-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.bubble-content {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #333;
+  word-wrap: break-word;
+  text-align: center;
+}
+
+.bubble-tail {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid white;
+}
+
+/* Status-specific styles */
+.status-bubble.status-idle {
+  border: 2px solid #FFB347;
+}
+
+.status-bubble.status-idle .bubble-tail {
+  border-top-color: #FFB347;
+}
+
+.status-bubble.status-working {
+  border: 2px solid #87CEEB;
+}
+
+.status-bubble.status-working .bubble-tail {
+  border-top-color: #87CEEB;
+}
+
+.status-bubble.status-reading {
+  border: 2px solid #DDA0DD;
+}
+
+.status-bubble.status-reading .bubble-tail {
+  border-top-color: #DDA0DD;
+}
+
+.status-bubble.status-done {
+  border: 2px solid #90EE90;
+}
+
+.status-bubble.status-done .bubble-tail {
+  border-top-color: #90EE90;
+}
+
+.status-bubble.status-error {
+  border: 2px solid #FFB6C1;
+}
+
+.status-bubble.status-error .bubble-tail {
+  border-top-color: #FFB6C1;
+}

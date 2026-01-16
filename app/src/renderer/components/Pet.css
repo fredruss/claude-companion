@@ -1,0 +1,98 @@
+.pet-container {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.pet-container.transitioning {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.pet-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+/* Idle animation - gentle bobbing */
+.pet-idle {
+  animation: idle-bob 2s ease-in-out infinite;
+}
+
+@keyframes idle-bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Working animation - focused bounce */
+.pet-working {
+  animation: working-bounce 0.5s ease-in-out infinite;
+}
+
+@keyframes working-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.02);
+  }
+}
+
+/* Reading animation - slight tilt */
+.pet-reading {
+  animation: reading-tilt 1.5s ease-in-out infinite;
+}
+
+@keyframes reading-tilt {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Done animation - happy bounce */
+.pet-done {
+  animation: done-celebrate 0.6s ease-in-out infinite;
+}
+
+@keyframes done-celebrate {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) rotate(-5deg);
+  }
+  75% {
+    transform: translateY(-8px) rotate(5deg);
+  }
+}
+
+/* Error animation - shake */
+.pet-error {
+  animation: error-shake 0.4s ease-in-out infinite;
+}
+
+@keyframes error-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
