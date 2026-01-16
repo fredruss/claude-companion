@@ -37,8 +37,10 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 #### Hook System
 - [x] Hook script (`hooks/status-reporter.js`) receives Claude Code events via stdin
 - [x] Maps tool names to pet states and human-readable actions
-- [x] Handles events: PreToolUse, PostToolUse, Stop, SessionStart, SessionEnd
+- [x] Handles events: PreToolUse, PostToolUse, Stop
 - [x] Writes status to `~/.claude-companion/status.json`
+- [x] Fixed event parsing to use correct Claude Code field names (`hook_event_name`, `tool_response.success`)
+- [x] Auto-idle timeout (4s) returns pet to idle after showing "done" state
 
 #### NPM Package Distribution
 - [x] Root `package.json` for npm global package
@@ -50,17 +52,11 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 - [x] `README.md` with installation and usage instructions
 - [x] Marked `app/package.json` as private to prevent accidental publish
 
-### Known Issues
+### Known Limitations
 
-- [ ] **Pet doesn't update status when Claude Code is running** - The hooks are configured and the pet launches, but status updates aren't being received/displayed properly. Needs investigation.
+- **No hook for "thinking" state** - Claude Code hooks only fire on tool use (PreToolUse, PostToolUse) and completion (Stop). There is no hook available when Claude is thinking/generating a response without using tools. The pet remains idle during pure text generation phases.
 
 ### Remaining Work
-
-#### Bug Fixes
-- [ ] Debug why status updates aren't reaching the pet (hook execution? file watching? IPC?)
-- [ ] Verify hook script is being called by Claude Code
-- [ ] Verify status.json is being written correctly
-- [ ] Verify file watcher is detecting changes
 
 #### Polish & Packaging
 - [ ] Add tray icon for quick access/quit
@@ -73,6 +69,7 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 - Sound effects (optional, toggleable)
 - Multiple pet skins/themes
 - Pet "moods" based on task success/failure rate
+- Workaround for "thinking" state (possible approaches: poll terminal output, watch for CPU activity, or wait for future Claude Code hook support)
 
 ## Project Structure
 
