@@ -1,0 +1,38 @@
+{
+  "name": "claude-companion",
+  "version": "1.0.0",
+  "description": "Desktop pet that shows Claude Code's real-time status",
+  "bin": {
+    "claude-companion": "./bin/claude-companion.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js",
+    "preuninstall": "node scripts/preuninstall.js",
+    "build": "cd app && npm run build && rm -rf ../out && cp -r out .."
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "hooks/",
+    "out/"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "desktop-pet",
+    "electron",
+    "companion"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/claude-companion"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "electron": "^33.2.1"
+  }
+}

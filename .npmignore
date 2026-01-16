@@ -1,0 +1,17 @@
+# Development files
+app/
+*.md
+!README.md
+
+# Git
+.git*
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts not needed
+node_modules/
+
+# Project config
+CLAUDE.md

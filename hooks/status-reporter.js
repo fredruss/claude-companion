@@ -14,10 +14,10 @@
  * - SessionEnd: When a session ends
  */
 
-import { writeFile, mkdir } from 'fs/promises'
-import { existsSync } from 'fs'
-import { join } from 'path'
-import { homedir } from 'os'
+const { writeFile, mkdir } = require('fs/promises')
+const { existsSync } = require('fs')
+const { join } = require('path')
+const { homedir } = require('os')
 
 const STATUS_DIR = join(homedir(), '.claude-companion')
 const STATUS_FILE = join(STATUS_DIR, 'status.json')

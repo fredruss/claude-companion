@@ -1,7 +1,8 @@
 {
-  "name": "claude-companion",
+  "name": "claude-companion-dev",
   "version": "1.0.0",
-  "description": "Desktop pet companion for Claude Code",
+  "private": true,
+  "description": "Desktop pet companion for Claude Code (development)",
   "main": "./out/main/index.js",
   "author": "",
   "license": "MIT",
