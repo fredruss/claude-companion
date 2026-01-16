@@ -73,9 +73,9 @@ async function writeStatus(status, action) {
 }
 
 async function handleEvent(event) {
-  const { event_name, tool_name, tool_input, error } = event
+  const { hook_event_name, tool_name, tool_input, tool_response } = event
 
-  switch (event_name) {
+  switch (hook_event_name) {
     case 'PreToolUse': {
       const state = TOOL_STATES[tool_name] || 'working'
       let action = TOOL_ACTIONS[tool_name] || `Using ${tool_name}...`
@@ -102,7 +102,7 @@ async function handleEvent(event) {
     }
 
     case 'PostToolUse': {
-      if (error) {
+      if (tool_response && tool_response.success === false) {
         await writeStatus('error', 'Something went wrong...')
       }
       // Don't change status on successful completion - wait for next action
@@ -110,14 +110,8 @@ async function handleEvent(event) {
     }
 
     case 'Stop': {
-      const reason = event.stop_reason
-      if (reason === 'end_turn') {
-        await writeStatus('done', 'All done!')
-      } else if (reason === 'max_tokens') {
-        await writeStatus('working', 'Continuing...')
-      } else {
-        await writeStatus('idle', 'Paused')
-      }
+      // Stop event just indicates Claude finished - show "done" state
+      await writeStatus('done', 'All done!')
       break
     }
 
