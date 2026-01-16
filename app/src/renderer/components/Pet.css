@@ -18,18 +18,9 @@
   filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
 }
 
-/* Idle animation - gentle bobbing */
+/* Idle - no animation, just sitting still */
 .pet-idle {
-  animation: idle-bob 2s ease-in-out infinite;
-}
-
-@keyframes idle-bob {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+  /* No animation when idle */
 }
 
 /* Working animation - focused bounce */
@@ -63,21 +54,9 @@
   }
 }
 
-/* Done animation - happy bounce */
+/* Done - no animation, just happy and still */
 .pet-done {
-  animation: done-celebrate 0.6s ease-in-out infinite;
-}
-
-@keyframes done-celebrate {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  25% {
-    transform: translateY(-8px) rotate(-5deg);
-  }
-  75% {
-    transform: translateY(-8px) rotate(5deg);
-  }
+  /* No animation when done */
 }
 
 /* Error animation - shake */

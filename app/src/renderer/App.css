@@ -9,9 +9,9 @@
   gap: 10px;
   user-select: none;
   -webkit-app-region: drag;
+  cursor: grab;
 }
 
-/* Ensure interactive elements aren't drag regions */
-.app-container * {
-  -webkit-app-region: no-drag;
+.app-container:active {
+  cursor: grabbing;
 }
