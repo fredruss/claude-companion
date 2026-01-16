@@ -39,6 +39,11 @@ function createHookConfig() {
   const command = `node "${DEST_HOOK}"`
 
   return {
+    UserPromptSubmit: [
+      {
+        hooks: [{ type: 'command', command }]
+      }
+    ],
     PreToolUse: [
       {
         matcher: '*',

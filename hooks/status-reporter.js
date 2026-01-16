@@ -7,6 +7,7 @@
  * status updates to ~/.claude-companion/status.json
  *
  * Hook events received via stdin as JSON:
+ * - UserPromptSubmit: When the user submits a prompt
  * - PreToolUse: Before a tool is used
  * - PostToolUse: After a tool completes
  * - Stop: When Claude stops responding
@@ -73,9 +74,20 @@ async function writeStatus(status, action) {
 }
 
 async function handleEvent(event) {
-  const { hook_event_name, tool_name, tool_input, tool_response } = event
+  const { hook_event_name, tool_name, tool_input, tool_response, user_prompt } = event
 
   switch (hook_event_name) {
+    case 'UserPromptSubmit': {
+      let action = 'Thinking...'
+      // Optionally show truncated prompt
+      if (user_prompt && user_prompt.length > 0) {
+        const truncated = user_prompt.slice(0, 30)
+        action = `Thinking about: "${truncated}${user_prompt.length > 30 ? '...' : ''}"`
+      }
+      await writeStatus('thinking', action)
+      break
+    }
+
     case 'PreToolUse': {
       const state = TOOL_STATES[tool_name] || 'working'
       let action = TOOL_ACTIONS[tool_name] || `Using ${tool_name}...`

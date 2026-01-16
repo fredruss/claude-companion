@@ -23,6 +23,47 @@
   /* No animation when idle */
 }
 
+/* Thinking animation - gentle sway with animated thought dots */
+.pet-thinking {
+  animation: thinking-sway 2s ease-in-out infinite;
+}
+
+@keyframes thinking-sway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Animated thought bubbles */
+.thought-dot-1 {
+  animation: thought-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.thought-dot-2 {
+  animation: thought-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.thought-dot-3 {
+  animation: thought-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+@keyframes thought-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Working animation - focused bounce */
 .pet-working {
   animation: working-bounce 0.5s ease-in-out infinite;

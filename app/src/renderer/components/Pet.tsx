@@ -17,6 +17,22 @@ const petFaces: Record<PetState, ReactNode> = {
       <path d="M 35 60 Q 50 70 65 60" stroke="#333" strokeWidth="3" fill="none" />
     </svg>
   ),
+  thinking: (
+    <svg viewBox="0 0 100 100" className="pet-svg">
+      <circle cx="50" cy="50" r="45" fill="#B8A9E8" />
+      {/* Eyes looking up */}
+      <circle cx="35" cy="38" r="6" fill="#fff" />
+      <circle cx="65" cy="38" r="6" fill="#fff" />
+      <circle cx="35" cy="35" r="3" fill="#333" />
+      <circle cx="65" cy="35" r="3" fill="#333" />
+      {/* Slight smile */}
+      <path d="M 40 62 Q 50 68 60 62" stroke="#333" strokeWidth="2" fill="none" />
+      {/* Thought dots */}
+      <circle cx="78" cy="25" r="3" fill="#333" className="thought-dot-1" />
+      <circle cx="85" cy="15" r="4" fill="#333" className="thought-dot-2" />
+      <circle cx="92" cy="5" r="5" fill="#333" className="thought-dot-3" />
+    </svg>
+  ),
   working: (
     <svg viewBox="0 0 100 100" className="pet-svg">
       <circle cx="50" cy="50" r="45" fill="#87CEEB" />

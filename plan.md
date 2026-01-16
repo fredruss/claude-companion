@@ -27,7 +27,7 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 #### Core Desktop Pet App
 - [x] Electron app with floating transparent window
 - [x] Frameless, always-on-top, draggable window
-- [x] SVG-based animated pet with 5 states (idle, working, reading, done, error)
+- [x] SVG-based animated pet with 6 states (idle, thinking, working, reading, done, error)
 - [x] Speech bubble showing current Claude Code activity
 - [x] File watcher monitoring `~/.claude-companion/status.json` via chokidar
 - [x] IPC communication between main process and renderer
@@ -37,7 +37,8 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 #### Hook System
 - [x] Hook script (`hooks/status-reporter.js`) receives Claude Code events via stdin
 - [x] Maps tool names to pet states and human-readable actions
-- [x] Handles events: PreToolUse, PostToolUse, Stop
+- [x] Handles events: UserPromptSubmit, PreToolUse, PostToolUse, Stop
+- [x] "Thinking" state detection via UserPromptSubmit hook - shows thinking state before tools are used
 - [x] Writes status to `~/.claude-companion/status.json`
 - [x] Fixed event parsing to use correct Claude Code field names (`hook_event_name`, `tool_response.success`)
 - [x] Auto-idle timeout (4s) returns pet to idle after showing "done" state
@@ -54,7 +55,7 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 
 ### Known Limitations
 
-- **No hook for "thinking" state** - Claude Code hooks only fire on tool use (PreToolUse, PostToolUse) and completion (Stop). There is no hook available when Claude is thinking/generating a response without using tools. The pet remains idle during pure text generation phases.
+- **Pure text responses (no tools)** - When Claude generates a response without using any tools, the pet will show "thinking" but won't transition to "working"/"reading" states. It will still show "done" when Claude finishes.
 
 ### Remaining Work
 
@@ -69,7 +70,6 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 - Sound effects (optional, toggleable)
 - Multiple pet skins/themes
 - Pet "moods" based on task success/failure rate
-- Workaround for "thinking" state (possible approaches: poll terminal output, watch for CPU activity, or wait for future Claude Code hook support)
 
 ## Project Structure
 
@@ -137,6 +137,7 @@ Automatically added to `~/.claude/settings.json` on install:
 ```json
 {
   "hooks": {
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
     "PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
     "PostToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
     "Stop": [{"hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}]
