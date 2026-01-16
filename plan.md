@@ -27,7 +27,7 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 #### Core Desktop Pet App
 - [x] Electron app with floating transparent window
 - [x] Frameless, always-on-top, draggable window
-- [x] SVG-based animated pet with 6 states (idle, thinking, working, reading, done, error)
+- [x] SVG-based animated pet with 7 states (idle, thinking, working, reading, waiting, done, error)
 - [x] Speech bubble showing current Claude Code activity
 - [x] File watcher monitoring `~/.claude-companion/status.json` via chokidar
 - [x] IPC communication between main process and renderer
@@ -37,11 +37,12 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 #### Hook System
 - [x] Hook script (`hooks/status-reporter.js`) receives Claude Code events via stdin
 - [x] Maps tool names to pet states and human-readable actions
-- [x] Handles events: UserPromptSubmit, PreToolUse, PostToolUse, Stop
+- [x] Handles events: UserPromptSubmit, PreToolUse, PostToolUse, Stop, Notification
 - [x] "Thinking" state detection via UserPromptSubmit hook - shows thinking state before tools are used
 - [x] Writes status to `~/.claude-companion/status.json`
 - [x] Fixed event parsing to use correct Claude Code field names (`hook_event_name`, `tool_response.success`)
 - [x] Auto-idle timeout (4s) returns pet to idle after showing "done" state
+- [ ] "Waiting" state for human intervention (permission prompts, questions via Notification hook) - WIP
 
 #### NPM Package Distribution
 - [x] Root `package.json` for npm global package
@@ -66,7 +67,6 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 - [ ] Publish to npm registry
 
 ### Nice-to-Have (Future)
-- "Waiting" state when Claude needs human intervention (permission prompts, questions)
 - Display token usage statistics
 - Click pet to open detailed activity log
 - Sound effects (optional, toggleable)
@@ -142,7 +142,8 @@ Automatically added to `~/.claude/settings.json` on install:
     "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
     "PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
     "PostToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
-    "Stop": [{"hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}]
+    "Stop": [{"hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
+    "Notification": [{"hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}]
   }
 }
 ```

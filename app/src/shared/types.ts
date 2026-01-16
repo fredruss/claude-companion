@@ -1,4 +1,4 @@
-export type PetState = 'idle' | 'thinking' | 'working' | 'reading' | 'done' | 'error'
+export type PetState = 'idle' | 'thinking' | 'working' | 'reading' | 'waiting' | 'done' | 'error'
 
 export interface Status {
   status: PetState

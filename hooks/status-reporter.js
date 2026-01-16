@@ -35,7 +35,7 @@ const TOOL_ACTIONS = {
   WebSearch: 'Searching the web...',
   Task: 'Working on subtask...',
   TodoWrite: 'Planning tasks...',
-  AskUserQuestion: 'Asking a question...',
+  AskUserQuestion: 'Has a question for you...',
   mcp__ide__getDiagnostics: 'Checking diagnostics...',
   mcp__ide__executeCode: 'Executing code...'
 }
@@ -52,7 +52,7 @@ const TOOL_STATES = {
   Bash: 'working',
   Task: 'working',
   TodoWrite: 'working',
-  AskUserQuestion: 'idle',
+  AskUserQuestion: 'waiting',
   mcp__ide__getDiagnostics: 'reading',
   mcp__ide__executeCode: 'working'
 }
@@ -116,8 +116,11 @@ async function handleEvent(event) {
     case 'PostToolUse': {
       if (tool_response && tool_response.success === false) {
         await writeStatus('error', 'Something went wrong...')
+      } else {
+        // Tool completed successfully - return to thinking state
+        // This ensures we don't get stuck in "waiting" after permission granted
+        await writeStatus('thinking', 'Thinking...')
       }
-      // Don't change status on successful completion - wait for next action
       break
     }
 
@@ -134,6 +137,25 @@ async function handleEvent(event) {
 
     case 'SessionEnd': {
       await writeStatus('idle', 'Session ended')
+      break
+    }
+
+    case 'Notification': {
+      const { notification_type } = event
+      switch (notification_type) {
+        case 'permission_prompt':
+          await writeStatus('waiting', 'Needs your permission...')
+          break
+        case 'elicitation_dialog':
+          await writeStatus('waiting', 'Has a question for you...')
+          break
+        case 'idle_prompt':
+          // User has been idle for 60+ seconds - just ignore
+          break
+        default:
+          // Unknown notification type, ignore
+          break
+      }
       break
     }
 

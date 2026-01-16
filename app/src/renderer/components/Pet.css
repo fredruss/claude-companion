@@ -95,6 +95,34 @@
   }
 }
 
+/* Waiting animation - gentle pulse to attract attention */
+.pet-waiting {
+  animation: waiting-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes waiting-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Animated question mark eyes */
+.waiting-eye {
+  animation: eye-bounce 0.8s ease-in-out infinite;
+}
+
+@keyframes eye-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
 /* Done - no animation, just happy and still */
 .pet-done {
   /* No animation when done */

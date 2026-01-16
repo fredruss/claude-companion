@@ -60,6 +60,11 @@ function createHookConfig() {
       {
         hooks: [{ type: 'command', command }]
       }
+    ],
+    Notification: [
+      {
+        hooks: [{ type: 'command', command }]
+      }
     ]
   }
 }

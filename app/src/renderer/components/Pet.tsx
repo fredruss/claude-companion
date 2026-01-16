@@ -52,6 +52,16 @@ const petFaces: Record<PetState, ReactNode> = {
       <path d="M 40 60 L 60 60" stroke="#333" strokeWidth="2" />
     </svg>
   ),
+  waiting: (
+    <svg viewBox="0 0 100 100" className="pet-svg">
+      <circle cx="50" cy="50" r="45" fill="#FFD93D" />
+      {/* Question mark eyes */}
+      <text x="35" y="48" textAnchor="middle" fontSize="20" fill="#333" className="waiting-eye">?</text>
+      <text x="65" y="48" textAnchor="middle" fontSize="20" fill="#333" className="waiting-eye">?</text>
+      {/* Slightly open mouth */}
+      <ellipse cx="50" cy="65" rx="8" ry="5" fill="#333" />
+    </svg>
+  ),
   done: (
     <svg viewBox="0 0 100 100" className="pet-svg">
       <circle cx="50" cy="50" r="45" fill="#90EE90" />
