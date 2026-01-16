@@ -1,22 +1,7 @@
 import { useState, useEffect } from 'react'
+import type { Status } from '../../shared/types'
 
-export interface Status {
-  status: 'idle' | 'working' | 'reading' | 'done' | 'error'
-  action: string
-  timestamp: number
-}
-
-interface ElectronAPI {
-  getStatus: () => Promise<Status>
-  onStatusUpdate: (callback: (status: Status) => void) => () => void
-  startDrag: () => void
-}
-
-declare global {
-  interface Window {
-    electronAPI: ElectronAPI
-  }
-}
+export type { Status }
 
 const defaultStatus: Status = {
   status: 'idle',

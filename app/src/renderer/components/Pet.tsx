@@ -1,7 +1,7 @@
-import { useState, useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
+import { useStateTransition } from '../hooks/useStateTransition'
+import type { PetState } from '../../shared/types'
 import './Pet.css'
-
-type PetState = 'idle' | 'working' | 'reading' | 'done' | 'error'
 
 interface PetProps {
   state: PetState
@@ -57,19 +57,7 @@ const petFaces: Record<PetState, ReactNode> = {
 }
 
 export function Pet({ state }: PetProps): ReactNode {
-  const [currentState, setCurrentState] = useState<PetState>(state)
-  const [isTransitioning, setIsTransitioning] = useState(false)
-
-  useEffect(() => {
-    if (state !== currentState) {
-      setIsTransitioning(true)
-      const timer = setTimeout(() => {
-        setCurrentState(state)
-        setIsTransitioning(false)
-      }, 150)
-      return () => clearTimeout(timer)
-    }
-  }, [state, currentState])
+  const { currentState, isTransitioning } = useStateTransition(state)
 
   return (
     <div className={`pet-container ${isTransitioning ? 'transitioning' : ''} pet-${currentState}`}>

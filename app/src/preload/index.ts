@@ -1,12 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-
-export interface Status {
-  status: 'idle' | 'working' | 'reading' | 'done' | 'error'
-  action: string
-  timestamp: number
-}
-
-export type StatusCallback = (status: Status) => void
+import type { Status, StatusCallback } from '../shared/types'
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getStatus: (): Promise<Status> => ipcRenderer.invoke('get-status'),

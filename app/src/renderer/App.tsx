@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react'
-import { Pet } from './components/Pet'
-import { StatusBubble } from './components/StatusBubble'
-import { useStatus } from './hooks/useStatus'
+import { Pet, StatusBubble } from './components'
+import { useStatus } from './hooks'
 import './App.css'
 
 function App(): ReactNode {
