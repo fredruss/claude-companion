@@ -14,9 +14,14 @@ export default defineConfig({
   },
   preload: {
     build: {
+      lib: {
+        entry: resolve(__dirname, 'src/preload/index.ts'),
+        formats: ['cjs'],
+        fileName: () => 'index.js'
+      },
       rollupOptions: {
-        input: {
-          index: resolve(__dirname, 'src/preload/index.ts')
+        output: {
+          entryFileNames: 'index.js'
         }
       }
     }

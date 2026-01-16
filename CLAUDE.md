@@ -16,7 +16,10 @@ npm install         # Install dependencies
 npm run dev         # Run in development mode (hot reload)
 npm run build       # Build for production
 npm run start       # Run built app
+npm run lint        # Run ESLint
 ```
+
+**Always run `npm run lint` after making code changes.**
 
 ## Architecture
 
