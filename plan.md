@@ -20,168 +20,134 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 └─────────────────┘                      └──────────────────┘
 ```
 
-### Part 1: Claude Code Hooks
-Configure hooks to write status updates to a JSON file on key events:
+## Implementation Status
 
-- **PreToolUse** → "Working: Reading file X" / "Editing Y" / "Running command"
-- **PostToolUse** → Tool completed (update progress)
-- **UserPromptSubmit** → "Received new task"
-- **Stop** → "Done! Waiting for next task"
-- **SessionStart/End** → "Session started" / "Session ended"
+### Completed
 
-Status file format (`~/.claude-companion/status.json`):
-```json
-{
-  "status": "working",           // idle | working | thinking | done
-  "action": "Editing",           // Current action
-  "detail": "src/index.ts",      // File/command being worked on
-  "tool": "Edit",                // Tool name
-  "timestamp": 1705412345000,
-  "session_id": "abc123"
-}
-```
+#### Core Desktop Pet App
+- [x] Electron app with floating transparent window
+- [x] Frameless, always-on-top, draggable window
+- [x] SVG-based animated pet with 5 states (idle, working, reading, done, error)
+- [x] Speech bubble showing current Claude Code activity
+- [x] File watcher monitoring `~/.claude-companion/status.json` via chokidar
+- [x] IPC communication between main process and renderer
+- [x] React components: Pet, StatusBubble
+- [x] Custom hooks: useStatus, useStateTransition, useAutoHide
 
-### Part 2: Desktop Pet App (macOS)
+#### Hook System
+- [x] Hook script (`hooks/status-reporter.js`) receives Claude Code events via stdin
+- [x] Maps tool names to pet states and human-readable actions
+- [x] Handles events: PreToolUse, PostToolUse, Stop, SessionStart, SessionEnd
+- [x] Writes status to `~/.claude-companion/status.json`
 
-**Tech: Electron + React**
+#### NPM Package Distribution
+- [x] Root `package.json` for npm global package
+- [x] CLI launcher (`bin/claude-companion.js`) - spawns detached Electron process
+- [x] Automatic hook configuration on install (`scripts/postinstall.js`)
+- [x] Hook cleanup on uninstall (`scripts/preuninstall.js`)
+- [x] Converted hook script to CommonJS for npm compatibility
+- [x] `.npmignore` to exclude dev files from published package
+- [x] `README.md` with installation and usage instructions
+- [x] Marked `app/package.json` as private to prevent accidental publish
 
-Features:
-1. **Always-on-top floating window** - Small, draggable, transparent background
-   - Can be positioned anywhere on screen
-   - Stays visible while you work in other apps
-   - Click-through option so it doesn't interfere
+### Known Issues
 
-2. **Animated mascot** with states:
-   - **Idle**: Relaxed pose, maybe gentle breathing animation
-   - **Working**: Typing/coding animation, focused expression
-   - **Reading**: Looking at something, thinking pose
-   - **Done**: Happy celebration, thumbs up
-   - **Error**: Worried/confused expression
+- [ ] **Pet doesn't update status when Claude Code is running** - The hooks are configured and the pet launches, but status updates aren't being received/displayed properly. Needs investigation.
 
-3. **Status bubble** - Small speech/thought bubble showing:
-   - Current action ("Reading src/index.ts...")
-   - Progress indicator for longer tasks
+### Remaining Work
 
-4. **File watcher** - Uses `chokidar` to watch status.json, triggers animations
+#### Bug Fixes
+- [ ] Debug why status updates aren't reaching the pet (hook execution? file watching? IPC?)
+- [ ] Verify hook script is being called by Claude Code
+- [ ] Verify status.json is being written correctly
+- [ ] Verify file watcher is detecting changes
 
-### Project Structure
-```
-claude-companion/
-├── hooks/
-│   └── status-reporter.js      # Hook script (Node.js for easy JSON handling)
-├── app/
-│   ├── package.json
-│   ├── electron/
-│   │   ├── main.ts             # Electron main process
-│   │   └── preload.ts
-│   └── src/
-│       ├── App.tsx
-│       ├── components/
-│       │   ├── Pet.tsx         # Animated mascot component
-│       │   ├── StatusBubble.tsx
-│       │   └── Window.tsx      # Draggable window controls
-│       ├── hooks/
-│       │   └── useStatus.ts    # File watcher hook
-│       └── assets/
-│           └── pet/            # Character sprites/animations
-│               ├── idle.gif (or CSS/Lottie animations)
-│               ├── working.gif
-│               ├── reading.gif
-│               ├── done.gif
-│               └── error.gif
-├── scripts/
-│   └── install-hooks.sh        # Sets up Claude Code hooks
-└── README.md
-```
+#### Polish & Packaging
+- [ ] Add tray icon for quick access/quit
+- [ ] Package as .dmg with electron-builder
+- [ ] Optional: auto-launch on login
+- [ ] Publish to npm registry
 
-## Implementation Steps
-
-### Step 1: Project setup
-- Initialize project with `npm init`
-- Set up Electron + React (using electron-vite for fast builds)
-- Configure TypeScript
-
-### Step 2: Create hook script (`hooks/status-reporter.js`)
-A Node.js script that:
-- Reads JSON from stdin (hook input from Claude Code)
-- Determines status based on event type and tool
-- Writes to `~/.claude-companion/status.json`
-
-```js
-// Example: Map tool names to friendly actions
-const toolActions = {
-  Read: 'reading',
-  Edit: 'editing',
-  Write: 'writing',
-  Bash: 'running command',
-  Grep: 'searching',
-  Glob: 'finding files'
-};
-```
-
-### Step 3: Configure hooks
-Create installer script that adds to `~/.claude/settings.json`:
-```json
-{
-  "hooks": {
-    "PreToolUse": [{ "matcher": "*", "hooks": [{ "type": "command", "command": "node /path/to/status-reporter.js pre" }] }],
-    "PostToolUse": [{ "matcher": "*", "hooks": [{ "type": "command", "command": "node /path/to/status-reporter.js post" }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "node /path/to/status-reporter.js stop" }] }],
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "node /path/to/status-reporter.js start" }] }],
-    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "node /path/to/status-reporter.js end" }] }]
-  }
-}
-```
-
-### Step 4: Build Electron desktop pet window
-- Create frameless, transparent, always-on-top BrowserWindow
-- Make window draggable
-- Set up IPC for file watching (main process watches, sends to renderer)
-
-```ts
-// Electron main.ts key settings
-const win = new BrowserWindow({
-  width: 200,
-  height: 250,
-  transparent: true,
-  frame: false,
-  alwaysOnTop: true,
-  skipTaskbar: true,
-  resizable: false,
-});
-```
-
-### Step 5: Build React UI
-- `Pet.tsx`: Animated character component (CSS animations or GIFs)
-- `StatusBubble.tsx`: Speech bubble with current action
-- `useStatus.ts`: Hook that receives status updates via IPC
-
-### Step 6: Create/source mascot assets
-Options:
-- Simple CSS-animated character (bouncing blob, geometric pet)
-- GIF sprites for each state
-- Lottie animations (more polished)
-- Could start simple and iterate!
-
-### Step 7: Polish & package
-- Add tray icon for quick access/quit
-- Package as .dmg with electron-builder
-- Optional: auto-launch on login
-
-## Verification
-1. Install hooks, run Claude Code, give it a task
-2. Check `~/.claude-companion/status.json` updates in real-time
-3. Verify pet window shows correct status and animates
-4. Test all states: idle → working (various tools) → done
-5. Test window dragging, always-on-top behavior
-
-## Nice-to-Have (Future)
+### Nice-to-Have (Future)
 - Click pet to open detailed activity log
 - Sound effects (optional, toggleable)
 - Multiple pet skins/themes
 - Pet "moods" based on task success/failure rate
 
+## Project Structure
+
+```
+claude-companion/
+├── package.json              # NPM package (global install)
+├── bin/
+│   └── claude-companion.js   # CLI launcher
+├── scripts/
+│   ├── postinstall.js        # Configures hooks on install
+│   └── preuninstall.js       # Removes hooks on uninstall
+├── hooks/
+│   └── status-reporter.js    # Hook script (CommonJS)
+├── app/                      # Electron app (dev only, private)
+│   ├── package.json
+│   ├── src/
+│   │   ├── main/index.ts     # Electron main process
+│   │   ├── preload/index.ts  # Preload script
+│   │   ├── renderer/         # React app
+│   │   │   ├── App.tsx
+│   │   │   ├── components/
+│   │   │   │   ├── Pet.tsx
+│   │   │   │   └── StatusBubble.tsx
+│   │   │   └── hooks/
+│   │   │       ├── useStatus.ts
+│   │   │       ├── useStateTransition.ts
+│   │   │       └── useAutoHide.ts
+│   │   └── shared/types.ts   # Shared TypeScript types
+│   └── electron.vite.config.ts
+├── out/                      # Built Electron app (published to npm)
+├── README.md
+└── .npmignore
+```
+
+## Installation
+
+```bash
+npm install -g claude-companion
+claude-companion  # launches the desktop pet
+```
+
+## Development
+
+```bash
+cd app
+npm install
+npm run dev      # Development mode with hot reload
+npm run build    # Build for production
+```
+
+## Status File Format
+
+`~/.claude-companion/status.json`:
+```json
+{
+  "status": "working",
+  "action": "Editing src/index.ts...",
+  "timestamp": 1705412345000
+}
+```
+
+## Hook Configuration
+
+Automatically added to `~/.claude/settings.json` on install:
+```json
+{
+  "hooks": {
+    "PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
+    "PostToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}],
+    "Stop": [{"hooks": [{"type": "command", "command": "node \"~/.claude-companion/hooks/status-reporter.js\""}]}]
+  }
+}
+```
+
 ## Resources
-- [Claude Code Hooks Docs](https://code.claude.com/docs/en/hooks)
+- [Claude Code Hooks Docs](https://docs.anthropic.com/en/docs/claude-code/hooks)
 - [Electron + React setup](https://electron-vite.org/)
 - [chokidar file watcher](https://github.com/paulmillr/chokidar)
