@@ -15,7 +15,7 @@
  * - SessionEnd: When a session ends
  */
 
-const { writeFile, mkdir } = require('fs/promises')
+const { writeFile, mkdir, readFile } = require('fs/promises')
 const { existsSync } = require('fs')
 const { join } = require('path')
 const { homedir } = require('os')
@@ -63,18 +63,71 @@ async function ensureStatusDir() {
   }
 }
 
-async function writeStatus(status, action) {
+/**
+ * Parse transcript JSONL file and sum up token usage
+ */
+async function parseTranscriptUsage(transcriptPath) {
+  if (!transcriptPath || !existsSync(transcriptPath)) {
+    return null
+  }
+
+  try {
+    const content = await readFile(transcriptPath, 'utf8')
+    const lines = content.trim().split('\n')
+
+    let totalInput = 0
+    let totalOutput = 0
+    let totalCacheRead = 0
+
+    for (const line of lines) {
+      if (!line.trim()) continue
+      try {
+        const entry = JSON.parse(line)
+        // Usage is nested inside message.usage for assistant messages
+        const usage = entry.message?.usage
+        if (usage) {
+          totalInput += usage.input_tokens || 0
+          totalOutput += usage.output_tokens || 0
+          totalCacheRead += usage.cache_read_input_tokens || 0
+        }
+      } catch {
+        // Skip malformed lines
+      }
+    }
+
+    // Only return usage if we found any tokens
+    if (totalInput === 0 && totalOutput === 0) {
+      return null
+    }
+
+    return {
+      input: totalInput,
+      output: totalOutput,
+      cacheRead: totalCacheRead
+    }
+  } catch {
+    return null
+  }
+}
+
+async function writeStatus(status, action, usage = null) {
   await ensureStatusDir()
   const data = {
     status,
     action,
     timestamp: Date.now()
   }
+  if (usage) {
+    data.usage = usage
+  }
   await writeFile(STATUS_FILE, JSON.stringify(data, null, 2))
 }
 
 async function handleEvent(event) {
-  const { hook_event_name, tool_name, tool_input, tool_response, user_prompt } = event
+  const { hook_event_name, tool_name, tool_input, tool_response, user_prompt, transcript_path } = event
+
+  // Parse token usage from transcript (do this for most events)
+  const usage = await parseTranscriptUsage(transcript_path)
 
   switch (hook_event_name) {
     case 'UserPromptSubmit': {
@@ -84,7 +137,7 @@ async function handleEvent(event) {
         const truncated = user_prompt.slice(0, 30)
         action = `Thinking about: "${truncated}${user_prompt.length > 30 ? '...' : ''}"`
       }
-      await writeStatus('thinking', action)
+      await writeStatus('thinking', action, usage)
       break
     }
 
@@ -109,24 +162,24 @@ async function handleEvent(event) {
         action = `Searching for "${tool_input.pattern.slice(0, 20)}${tool_input.pattern.length > 20 ? '...' : ''}"...`
       }
 
-      await writeStatus(state, action)
+      await writeStatus(state, action, usage)
       break
     }
 
     case 'PostToolUse': {
       if (tool_response && tool_response.success === false) {
-        await writeStatus('error', 'Something went wrong...')
+        await writeStatus('error', 'Something went wrong...', usage)
       } else {
         // Tool completed successfully - return to thinking state
         // This ensures we don't get stuck in "waiting" after permission granted
-        await writeStatus('thinking', 'Thinking...')
+        await writeStatus('thinking', 'Thinking...', usage)
       }
       break
     }
 
     case 'Stop': {
       // Stop event just indicates Claude finished - show "done" state
-      await writeStatus('done', 'All done!')
+      await writeStatus('done', 'All done!', usage)
       break
     }
 
@@ -136,7 +189,7 @@ async function handleEvent(event) {
     }
 
     case 'SessionEnd': {
-      await writeStatus('idle', 'Session ended')
+      await writeStatus('idle', 'Session ended', usage)
       break
     }
 
@@ -144,10 +197,10 @@ async function handleEvent(event) {
       const { notification_type } = event
       switch (notification_type) {
         case 'permission_prompt':
-          await writeStatus('waiting', 'Needs your permission...')
+          await writeStatus('waiting', 'Needs your permission...', usage)
           break
         case 'elicitation_dialog':
-          await writeStatus('waiting', 'Has a question for you...')
+          await writeStatus('waiting', 'Has a question for you...', usage)
           break
         case 'idle_prompt':
           // User has been idle for 60+ seconds - just ignore

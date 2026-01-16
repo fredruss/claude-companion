@@ -1,9 +1,16 @@
 export type PetState = 'idle' | 'thinking' | 'working' | 'reading' | 'waiting' | 'done' | 'error'
 
+export interface TokenUsage {
+  input: number
+  output: number
+  cacheRead: number
+}
+
 export interface Status {
   status: PetState
   action: string
   timestamp: number
+  usage?: TokenUsage
 }
 
 export type StatusCallback = (status: Status) => void

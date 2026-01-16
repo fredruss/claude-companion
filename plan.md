@@ -67,11 +67,11 @@ A cute desktop pet companion that shows Claude Code's real-time status in an alw
 - [ ] Publish to npm registry
 
 ### Nice-to-Have (Future)
-- Display token usage statistics
+- [x] Display token usage statistics (compact badge below pet)
 - Click pet to open detailed activity log
-- Sound effects (optional, toggleable)
 - Multiple pet skins/themes
 - Pet "moods" based on task success/failure rate
+- Dev workflow: Add script to sync hook changes from `hooks/` to `~/.claude-companion/hooks/` during development
 
 ## Project Structure
 
@@ -129,7 +129,12 @@ npm run build    # Build for production
 {
   "status": "working",
   "action": "Editing src/index.ts...",
-  "timestamp": 1705412345000
+  "timestamp": 1705412345000,
+  "usage": {
+    "input": 12345,
+    "output": 678,
+    "cacheRead": 98765
+  }
 }
 ```
 
