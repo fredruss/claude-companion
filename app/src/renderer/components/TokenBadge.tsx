@@ -31,7 +31,8 @@ export function TokenBadge({ usage, status }: TokenBadgeProps): ReactNode {
     return null
   }
 
-  const totalTokens = usage.input + usage.output
+  // Show context size (input includes cache_read_input_tokens)
+  const totalTokens = usage.input
 
   return (
     <div className="token-badge">

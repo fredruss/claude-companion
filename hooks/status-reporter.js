@@ -15,6 +15,8 @@
  * - SessionEnd: When a session ends
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.parseTranscriptUsage = parseTranscriptUsage;
+exports.handleEvent = handleEvent;
 const promises_1 = require("fs/promises");
 const fs_1 = require("fs");
 const path_1 = require("path");
@@ -70,18 +72,24 @@ async function parseTranscriptUsage(transcriptPath) {
         const lines = content.trim().split('\n');
         let totalInput = 0;
         let totalOutput = 0;
-        let totalCacheRead = 0;
+        const seenRequests = new Set();
         for (const line of lines) {
             if (!line.trim())
                 continue;
             try {
                 const entry = JSON.parse(line);
+                // Deduplicate by requestId to avoid counting streaming chunks multiple times
+                if (entry.requestId) {
+                    if (seenRequests.has(entry.requestId))
+                        continue;
+                    seenRequests.add(entry.requestId);
+                }
                 // Usage is nested inside message.usage for assistant messages
                 const usage = entry.message?.usage;
                 if (usage) {
-                    totalInput += usage.input_tokens || 0;
+                    // Include cache_read_input_tokens in input to match Claude Code's context display
+                    totalInput += (usage.input_tokens || 0) + (usage.cache_read_input_tokens || 0);
                     totalOutput += usage.output_tokens || 0;
-                    totalCacheRead += usage.cache_read_input_tokens || 0;
                 }
             }
             catch {
@@ -94,8 +102,7 @@ async function parseTranscriptUsage(transcriptPath) {
         }
         return {
             input: totalInput,
-            output: totalOutput,
-            cacheRead: totalCacheRead
+            output: totalOutput
         };
     }
     catch {
@@ -221,7 +228,11 @@ async function main() {
         process.exit(1);
     }
 }
-main().catch((err) => {
-    console.error('Hook error:', err);
-    process.exit(1);
-});
+const isMain = typeof require !== 'undefined' && require.main === module;
+// Only run when invoked directly; avoid running on import in tests.
+if (isMain) {
+    main().catch((err) => {
+        console.error('Hook error:', err);
+        process.exit(1);
+    });
+}

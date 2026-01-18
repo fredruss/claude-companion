@@ -3,7 +3,7 @@ export type PetState = 'idle' | 'thinking' | 'working' | 'reading' | 'waiting' |
 export interface TokenUsage {
   input: number
   output: number
-  cacheRead: number
+  cacheRead?: number // Legacy field, now folded into input
 }
 
 export interface Status {

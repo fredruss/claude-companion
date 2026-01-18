@@ -78,12 +78,13 @@ export async function parseTranscriptUsage(transcriptPath: string | undefined): 
 
     let totalInput = 0
     let totalOutput = 0
-    let totalCacheRead = 0
+    const seenRequests = new Set<string>()
 
     for (const line of lines) {
       if (!line.trim()) continue
       try {
         const entry = JSON.parse(line) as {
+          requestId?: string
           message?: {
             usage?: {
               input_tokens?: number
@@ -92,12 +93,19 @@ export async function parseTranscriptUsage(transcriptPath: string | undefined): 
             }
           }
         }
+
+        // Deduplicate by requestId to avoid counting streaming chunks multiple times
+        if (entry.requestId) {
+          if (seenRequests.has(entry.requestId)) continue
+          seenRequests.add(entry.requestId)
+        }
+
         // Usage is nested inside message.usage for assistant messages
         const usage = entry.message?.usage
         if (usage) {
-          totalInput += usage.input_tokens || 0
+          // Include cache_read_input_tokens in input to match Claude Code's context display
+          totalInput += (usage.input_tokens || 0) + (usage.cache_read_input_tokens || 0)
           totalOutput += usage.output_tokens || 0
-          totalCacheRead += usage.cache_read_input_tokens || 0
         }
       } catch {
         // Skip malformed lines
@@ -111,8 +119,7 @@ export async function parseTranscriptUsage(transcriptPath: string | undefined): 
 
     return {
       input: totalInput,
-      output: totalOutput,
-      cacheRead: totalCacheRead
+      output: totalOutput
     }
   } catch {
     return null

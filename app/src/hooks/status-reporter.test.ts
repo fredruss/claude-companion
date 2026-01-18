@@ -311,7 +311,7 @@ describe('parseTranscriptUsage', () => {
     expect(result).toBeNull()
   })
 
-  it('sums tokens across multiple JSONL entries', async () => {
+  it('sums tokens across multiple JSONL entries, including cache_read in input', async () => {
     mockExistsSync.mockReturnValue(true)
     const jsonlContent = [
       JSON.stringify({ message: { usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 20 } } }),
@@ -323,10 +323,11 @@ describe('parseTranscriptUsage', () => {
 
     const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
 
+    // input includes both input_tokens and cache_read_input_tokens
+    // (100+20) + (200+30) + (150+10) = 510
     expect(result).toEqual({
-      input: 450,
-      output: 225,
-      cacheRead: 60
+      input: 510,
+      output: 225
     })
   })
 
@@ -342,10 +343,10 @@ describe('parseTranscriptUsage', () => {
 
     const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
 
+    // input includes cache_read: (100+20) + (200+30) = 350
     expect(result).toEqual({
-      input: 300,
-      output: 150,
-      cacheRead: 50
+      input: 350,
+      output: 150
     })
   })
 
@@ -378,8 +379,7 @@ describe('parseTranscriptUsage', () => {
 
     expect(result).toEqual({
       input: 300,
-      output: 150,
-      cacheRead: 0
+      output: 150
     })
   })
 
@@ -395,8 +395,28 @@ describe('parseTranscriptUsage', () => {
 
     expect(result).toEqual({
       input: 100,
-      output: 50,
-      cacheRead: 0
+      output: 50
+    })
+  })
+
+  it('deduplicates entries by requestId to avoid counting streaming chunks multiple times', async () => {
+    mockExistsSync.mockReturnValue(true)
+    // Simulate streaming: same requestId appears multiple times with same usage
+    const jsonlContent = [
+      JSON.stringify({ requestId: 'req-1', message: { usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 1000 } } }),
+      JSON.stringify({ requestId: 'req-1', message: { usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 1000 } } }),
+      JSON.stringify({ requestId: 'req-1', message: { usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 1000 } } }),
+      JSON.stringify({ requestId: 'req-2', message: { usage: { input_tokens: 200, output_tokens: 100, cache_read_input_tokens: 2000 } } })
+    ].join('\n')
+
+    mockReadFile.mockResolvedValue(jsonlContent)
+
+    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+
+    // Should only count each requestId once: (100+1000) + (200+2000) = 3300 input, 50+100 = 150 output
+    expect(result).toEqual({
+      input: 3300,
+      output: 150
     })
   })
 })
