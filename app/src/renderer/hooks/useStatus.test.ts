@@ -263,9 +263,8 @@ describe('useStatus', () => {
       action: 'Working...',
       timestamp: Date.now(),
       usage: {
-        input: 1000,
-        output: 500,
-        cacheRead: 200
+        context: 1000,
+        output: 500
       }
     }
     mockGetStatus.mockResolvedValue(statusWithUsage)
@@ -277,9 +276,8 @@ describe('useStatus', () => {
     })
 
     expect(result.current.usage).toEqual({
-      input: 1000,
-      output: 500,
-      cacheRead: 200
+      context: 1000,
+      output: 500
     })
   })
 })

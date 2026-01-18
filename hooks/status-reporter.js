@@ -61,7 +61,8 @@ async function ensureStatusDir() {
     }
 }
 /**
- * Parse transcript JSONL file and sum up token usage
+ * Parse transcript JSONL file and get the latest request's context size.
+ * This shows how "full" the context window is, not cumulative usage.
  */
 async function parseTranscriptUsage(transcriptPath) {
     if (!transcriptPath || !(0, fs_1.existsSync)(transcriptPath)) {
@@ -70,26 +71,27 @@ async function parseTranscriptUsage(transcriptPath) {
     try {
         const content = await (0, promises_1.readFile)(transcriptPath, 'utf8');
         const lines = content.trim().split('\n');
-        let totalInput = 0;
-        let totalOutput = 0;
-        const seenRequests = new Set();
+        let latestContext = 0;
+        let latestOutput = 0;
+        let latestRequestId = null;
+        // Process lines to find the latest request's usage
         for (const line of lines) {
             if (!line.trim())
                 continue;
             try {
                 const entry = JSON.parse(line);
-                // Deduplicate by requestId to avoid counting streaming chunks multiple times
-                if (entry.requestId) {
-                    if (seenRequests.has(entry.requestId))
-                        continue;
-                    seenRequests.add(entry.requestId);
-                }
                 // Usage is nested inside message.usage for assistant messages
                 const usage = entry.message?.usage;
                 if (usage) {
-                    // Include cache_read_input_tokens in input to match Claude Code's context display
-                    totalInput += (usage.input_tokens || 0) + (usage.cache_read_input_tokens || 0);
-                    totalOutput += usage.output_tokens || 0;
+                    // Always update - streaming chunks have same requestId but growing usage
+                    // Last entry in file has final totals
+                    latestRequestId = entry.requestId || null;
+                    // Context size = input + cache_creation + cache_read
+                    // This represents how "full" the context window is for this request
+                    latestContext = (usage.input_tokens || 0)
+                        + (usage.cache_creation_input_tokens || 0)
+                        + (usage.cache_read_input_tokens || 0);
+                    latestOutput = usage.output_tokens || 0;
                 }
             }
             catch {
@@ -97,12 +99,12 @@ async function parseTranscriptUsage(transcriptPath) {
             }
         }
         // Only return usage if we found any tokens
-        if (totalInput === 0 && totalOutput === 0) {
+        if (latestContext === 0 && latestOutput === 0) {
             return null;
         }
         return {
-            input: totalInput,
-            output: totalOutput
+            context: latestContext,
+            output: latestOutput
         };
     }
     catch {

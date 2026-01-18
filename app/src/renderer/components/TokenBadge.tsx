@@ -31,8 +31,11 @@ export function TokenBadge({ usage, status }: TokenBadgeProps): ReactNode {
     return null
   }
 
-  // Show context size (input includes cache_read_input_tokens)
-  const totalTokens = usage.input
+  // Show total context size (input + cache_creation + cache_read)
+  // Support legacy format (input/cacheRead) for backwards compatibility
+  type LegacyUsage = { input?: number; cacheRead?: number }
+  const legacy = usage as unknown as LegacyUsage
+  const totalTokens = usage.context ?? ((legacy.input || 0) + (legacy.cacheRead || 0))
 
   return (
     <div className="token-badge">

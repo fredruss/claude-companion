@@ -1,9 +1,8 @@
 export type PetState = 'idle' | 'thinking' | 'working' | 'reading' | 'waiting' | 'done' | 'error'
 
 export interface TokenUsage {
-  input: number
+  context: number // Total context tokens (input + cache_creation + cache_read)
   output: number
-  cacheRead?: number // Legacy field, now folded into input
 }
 
 export interface Status {

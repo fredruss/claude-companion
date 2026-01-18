@@ -311,23 +311,35 @@ describe('parseTranscriptUsage', () => {
     expect(result).toBeNull()
   })
 
-  it('sums tokens across multiple JSONL entries, including cache_read in input', async () => {
+  it('returns latest request context size, not cumulative', async () => {
     mockExistsSync.mockReturnValue(true)
     const jsonlContent = [
-      JSON.stringify({ message: { usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 20 } } }),
-      JSON.stringify({ message: { usage: { input_tokens: 200, output_tokens: 100, cache_read_input_tokens: 30 } } }),
-      JSON.stringify({ message: { usage: { input_tokens: 150, output_tokens: 75, cache_read_input_tokens: 10 } } })
+      JSON.stringify({
+        message: {
+          usage: { input_tokens: 100, output_tokens: 50, cache_creation_input_tokens: 5, cache_read_input_tokens: 20 }
+        }
+      }),
+      JSON.stringify({
+        message: {
+          usage: { input_tokens: 200, output_tokens: 100, cache_creation_input_tokens: 10, cache_read_input_tokens: 30 }
+        }
+      }),
+      JSON.stringify({
+        message: {
+          usage: { input_tokens: 150, output_tokens: 75, cache_creation_input_tokens: 15, cache_read_input_tokens: 10 }
+        }
+      })
     ].join('\n')
 
     mockReadFile.mockResolvedValue(jsonlContent)
 
     const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
 
-    // input includes both input_tokens and cache_read_input_tokens
-    // (100+20) + (200+30) + (150+10) = 510
+    // Returns LATEST request's context, not cumulative sum
+    // Last entry: 150 + 15 + 10 = 175 context, 75 output
     expect(result).toEqual({
-      input: 510,
-      output: 225
+      context: 175,
+      output: 75
     })
   })
 
@@ -343,10 +355,10 @@ describe('parseTranscriptUsage', () => {
 
     const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
 
-    // input includes cache_read: (100+20) + (200+30) = 350
+    // Returns latest valid entry: 200 + 30 = 230 context, 100 output
     expect(result).toEqual({
-      input: 350,
-      output: 150
+      context: 230,
+      output: 100
     })
   })
 
@@ -377,9 +389,10 @@ describe('parseTranscriptUsage', () => {
 
     const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
 
+    // Returns latest entry: 200 context, 100 output
     expect(result).toEqual({
-      input: 300,
-      output: 150
+      context: 200,
+      output: 100
     })
   })
 
@@ -394,14 +407,14 @@ describe('parseTranscriptUsage', () => {
     const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
 
     expect(result).toEqual({
-      input: 100,
+      context: 100,
       output: 50
     })
   })
 
-  it('deduplicates entries by requestId to avoid counting streaming chunks multiple times', async () => {
+  it('returns the latest unique request context (ignores duplicate requestIds)', async () => {
     mockExistsSync.mockReturnValue(true)
-    // Simulate streaming: same requestId appears multiple times with same usage
+    // Simulate streaming: same requestId appears multiple times, then a new request
     const jsonlContent = [
       JSON.stringify({ requestId: 'req-1', message: { usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 1000 } } }),
       JSON.stringify({ requestId: 'req-1', message: { usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 1000 } } }),
@@ -413,10 +426,31 @@ describe('parseTranscriptUsage', () => {
 
     const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
 
-    // Should only count each requestId once: (100+1000) + (200+2000) = 3300 input, 50+100 = 150 output
+    // Returns LATEST request (req-2): 200 + 2000 = 2200 context, 100 output
     expect(result).toEqual({
-      input: 3300,
-      output: 150
+      context: 2200,
+      output: 100
+    })
+  })
+
+  it('captures final values when same requestId has growing usage (streaming)', async () => {
+    mockExistsSync.mockReturnValue(true)
+    // Simulate streaming: same requestId with GROWING usage over time
+    // This tests that we capture the LAST entry's values, not the first
+    const jsonlContent = [
+      JSON.stringify({ requestId: 'req-1', message: { usage: { input_tokens: 10, output_tokens: 5 } } }),
+      JSON.stringify({ requestId: 'req-1', message: { usage: { input_tokens: 50, output_tokens: 25 } } }),
+      JSON.stringify({ requestId: 'req-1', message: { usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 1000 } } })
+    ].join('\n')
+
+    mockReadFile.mockResolvedValue(jsonlContent)
+
+    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+
+    // Should return LAST entry's values (100 + 1000 = 1100), not first (10)
+    expect(result).toEqual({
+      context: 1100,
+      output: 50
     })
   })
 })
