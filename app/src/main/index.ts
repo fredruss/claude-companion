@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, screen, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, screen, Menu, nativeImage } from 'electron'
 import { join } from 'path'
 import { watch } from 'chokidar'
 import { readFile, mkdir } from 'fs/promises'
@@ -13,11 +13,11 @@ let mainWindow: BrowserWindow | null = null
 
 // Sticker pack definitions (id and name only - renderer has the actual assets)
 const STICKER_PACKS = [
-  { id: 'default', name: 'Default' },
-  { id: 'kawaii', name: 'Kawaii' }
+  { id: 'bot1', name: 'Bot1' },
+  { id: 'svg', name: 'SVG' }
 ]
 
-let activePack = 'default'
+let activePack = 'bot1'
 
 interface Status {
   status: 'idle' | 'working' | 'reading' | 'done' | 'error'
@@ -157,6 +157,15 @@ app.whenReady().then(async () => {
   await loadSettings()
   createWindow()
   setupStatusWatcher()
+
+  // Set custom dock icon on macOS
+  if (process.platform === 'darwin') {
+    const iconPath = join(__dirname, '../../resources/icon.png')
+    if (existsSync(iconPath)) {
+      const icon = nativeImage.createFromPath(iconPath)
+      app.dock.setIcon(icon)
+    }
+  }
 
   // Send initial status
   setTimeout(sendStatus, 1000)

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { PetState } from '../../shared/types'
-import { defaultPack } from './defaultPack'
-import { kawaiiPack } from './kawaiiPack'
+import { bot1Pack } from './bot1Pack'
+import { svgPack } from './svgPack'
 
 type StickerPackType = 'svg' | 'png'
 
@@ -23,7 +23,7 @@ export interface PngStickerPack extends StickerPackBase {
 
 export type StickerPack = SvgStickerPack | PngStickerPack
 
-const PACKS: StickerPack[] = [defaultPack, kawaiiPack]
+const PACKS: StickerPack[] = [bot1Pack, svgPack]
 
 export function getPackById(id: string): StickerPack {
   return PACKS.find((p) => p.id === id) ?? PACKS[0]

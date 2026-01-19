@@ -1,8 +1,8 @@
 import type { SvgStickerPack } from './index'
 
-export const defaultPack: SvgStickerPack = {
-  id: 'default',
-  name: 'Default',
+export const svgPack: SvgStickerPack = {
+  id: 'svg',
+  name: 'SVG',
   type: 'svg',
   faces: {
     idle: (
