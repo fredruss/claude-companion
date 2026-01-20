@@ -1,31 +1,35 @@
 # Claude Code Companion
 
-A desktop pet that shows Claude Code's real-time status. Watch your little companion read, write, and work alongside you!
+<img src="app/resources/icon.png" width="128" alt="Claude Code Companion icon">
+
+A desktop companion pet that shows Claude Code's real-time status and token usage.
+
+<img src="app/resources/companion_screenshot.png" width="200" alt="Screenshot of Claude Code Companion showing the pet with a speech bubble and token count">
 
 ## Installation
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/fredsourcing/claude-companion/releases):
+### Prerequisites
 
-| Platform | Download |
-|----------|----------|
-| macOS (Apple Silicon) | `Claude Code Companion-x.x.x-arm64.dmg` |
-| macOS (Intel) | `Claude Code Companion-x.x.x.dmg` |
-| Windows | `Claude Code Companion-x.x.x.exe` |
-| Linux | `Claude Code Companion-x.x.x.AppImage` |
+- Node.js 18+
+- Claude Code CLI
 
 ### Setup
 
-**macOS**: Open the `.dmg` and drag Claude Code Companion to Applications. On first launch, right-click and select "Open" to bypass Gatekeeper.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/fredsourcing/claude-companion
+   cd claude-companion/app
+   npm install
+   ```
 
-**Windows**: Run the `.exe` installer and follow the prompts.
+2. Run the app:
+   ```bash
+   npm run dev
+   ```
 
-**Linux**: Make the `.AppImage` executable (`chmod +x`) and run it.
-
-On first launch, Claude Code Companion automatically configures the Claude Code hooks needed to receive status updates.
+On first launch, the app adds hooks to `~/.claude/settings.json` to receive Claude Code events.
 
 ## Usage
-
-Launch Claude Code Companion from your Applications folder (macOS), Start menu (Windows), or run the AppImage (Linux).
 
 The pet window will appear and float on top of other windows. It automatically updates based on what Claude Code is doing:
 
@@ -53,10 +57,21 @@ Claude Code (Terminal) --[hooks]--> status.json <--[watching]-- Desktop Pet (Ele
 2. The script writes status updates to `~/.claude-companion/status.json`
 3. The Electron app watches this file and updates the pet's expression
 
-## Requirements
+## Building from Source
 
-- Claude Code CLI
-- Node.js (required for hooks to work - most Claude Code users already have this installed)
+To build distributable installers for your platform:
+
+```bash
+cd app
+npm run dist        # Build for current platform
+npm run dist:mac    # macOS .dmg
+npm run dist:win    # Windows .exe
+npm run dist:linux  # Linux .AppImage
+```
+
+Output goes to `app/dist/`.
+
+Note: macOS builds will show a security warning unless code-signed with an Apple Developer certificate.
 
 ## Troubleshooting
 
@@ -68,31 +83,11 @@ Check that the hooks are configured in `~/.claude/settings.json`:
 cat ~/.claude/settings.json | grep claude-companion
 ```
 
-If hooks are missing, try relaunching Claude Code Companion - it configures hooks automatically on startup.
+If hooks are missing, restart the app - it configures hooks automatically on launch.
 
 ### Pet window doesn't appear
 
 On macOS, you may need to allow the app in System Preferences > Security & Privacy.
-
-## Development
-
-```bash
-git clone https://github.com/fredsourcing/claude-companion
-cd claude-companion/app
-npm install
-npm run dev
-```
-
-To build distributable installers:
-
-```bash
-npm run dist        # Build for current platform
-npm run dist:mac    # macOS .dmg
-npm run dist:win    # Windows .exe
-npm run dist:linux  # Linux .AppImage
-```
-
-Output goes to `app/dist/`.
 
 ## License
 
