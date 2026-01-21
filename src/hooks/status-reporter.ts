@@ -64,13 +64,35 @@ async function ensureStatusDir(): Promise<void> {
   }
 }
 
+interface TranscriptData {
+  usage: TokenUsage | null
+  thinking: string | null
+}
+
 /**
- * Parse transcript JSONL file and get the latest request's context size.
- * This shows how "full" the context window is, not cumulative usage.
+ * Truncate text to a maximum length, adding ellipsis if needed.
+ * Tries to break at word boundaries.
  */
-export async function parseTranscriptUsage(transcriptPath: string | undefined): Promise<TokenUsage | null> {
+function truncateThinking(text: string, maxLength: number = 40): string {
+  if (text.length <= maxLength) return text
+
+  // Try to break at a word boundary
+  const truncated = text.slice(0, maxLength)
+  const lastSpace = truncated.lastIndexOf(' ')
+  if (lastSpace > maxLength * 0.6) {
+    return truncated.slice(0, lastSpace) + '...'
+  }
+  return truncated + '...'
+}
+
+/**
+ * Parse transcript JSONL file to extract usage and thinking content.
+ * Usage shows how "full" the context window is.
+ * Thinking extracts Claude's internal reasoning (not user-facing responses).
+ */
+export async function parseTranscript(transcriptPath: string | undefined): Promise<TranscriptData> {
   if (!transcriptPath || !existsSync(transcriptPath)) {
-    return null
+    return { usage: null, thinking: null }
   }
 
   try {
@@ -79,9 +101,11 @@ export async function parseTranscriptUsage(transcriptPath: string | undefined): 
 
     let latestContext = 0
     let latestOutput = 0
-    let latestRequestId: string | null = null
+    let latestUsageRequestId: string | null = null
+    let latestThinking: string | null = null
+    let latestThinkingRequestId: string | null = null
 
-    // Process lines to find the latest request's usage
+    // Process lines to find usage and thinking content
     for (const line of lines) {
       if (!line.trim()) continue
       try {
@@ -94,39 +118,62 @@ export async function parseTranscriptUsage(transcriptPath: string | undefined): 
               cache_creation_input_tokens?: number
               cache_read_input_tokens?: number
             }
+            content?: Array<{
+              type: string
+              thinking?: string
+              text?: string
+            }>
           }
         }
 
-        // Usage is nested inside message.usage for assistant messages
+        const requestId = entry.requestId || null
+
+        // Extract usage from message.usage
         const usage = entry.message?.usage
         if (usage) {
-          // Always update - streaming chunks have same requestId but growing usage
-          // Last entry in file has final totals
-          latestRequestId = entry.requestId || null
           // Context size = input + cache_creation + cache_read
-          // This represents how "full" the context window is for this request
           latestContext =
             (usage.input_tokens || 0) +
             (usage.cache_creation_input_tokens || 0) +
             (usage.cache_read_input_tokens || 0)
           latestOutput = usage.output_tokens || 0
+          latestUsageRequestId = requestId
+        }
+
+        // Extract thinking content from message.content
+        // PRIVACY: Only extract "thinking" blocks, never "text" blocks (user responses)
+        const messageContent = entry.message?.content
+        if (Array.isArray(messageContent)) {
+          for (const block of messageContent) {
+            if (block.type === 'thinking' && block.thinking) {
+              latestThinking = block.thinking
+              latestThinkingRequestId = requestId
+            }
+          }
         }
       } catch {
         // Skip malformed lines
       }
     }
 
-    // Only return usage if we found any tokens
-    if (latestContext === 0 && latestOutput === 0) {
-      return null
-    }
+    // Only use thinking if it's from the same request as the latest usage
+    // This prevents showing stale thinking from previous requests
+    const thinkingResult =
+      latestThinking && latestThinkingRequestId === latestUsageRequestId
+        ? truncateThinking(latestThinking)
+        : null
+
+    const usageResult =
+      latestContext === 0 && latestOutput === 0
+        ? null
+        : { context: latestContext, output: latestOutput }
 
     return {
-      context: latestContext,
-      output: latestOutput
+      usage: usageResult,
+      thinking: thinkingResult
     }
   } catch {
-    return null
+    return { usage: null, thinking: null }
   }
 }
 
@@ -151,18 +198,13 @@ export async function handleEvent(event: HookEvent): Promise<void> {
   const { hook_event_name, tool_name, tool_input, tool_response, user_prompt, transcript_path } =
     event
 
-  // Parse token usage from transcript (do this for most events)
-  const usage = await parseTranscriptUsage(transcript_path)
+  // Parse token usage and thinking content from transcript
+  const { usage, thinking } = await parseTranscript(transcript_path)
 
   switch (hook_event_name) {
     case 'UserPromptSubmit': {
-      let action = 'Thinking...'
-      // Optionally show truncated prompt
-      if (user_prompt && user_prompt.length > 0) {
-        const truncated = user_prompt.slice(0, 30)
-        action = `Thinking about: "${truncated}${user_prompt.length > 30 ? '...' : ''}"`
-      }
-      await writeStatus('thinking', action, usage)
+      // Don't display user prompts for privacy - only show generic status
+      await writeStatus('thinking', 'Thinking...', usage)
       break
     }
 
@@ -196,8 +238,9 @@ export async function handleEvent(event: HookEvent): Promise<void> {
         await writeStatus('error', 'Something went wrong...', usage)
       } else {
         // Tool completed successfully - return to thinking state
-        // This ensures we don't get stuck in "waiting" after permission granted
-        await writeStatus('thinking', 'Thinking...', usage)
+        // Show actual thinking content if available
+        const action = thinking ? `Thinking: "${thinking}"` : 'Thinking...'
+        await writeStatus('thinking', action, usage)
       }
       break
     }

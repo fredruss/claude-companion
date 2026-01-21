@@ -25,7 +25,7 @@ vi.mock('fs/promises', () => ({
 }))
 
 // Now import the module under test
-const { handleEvent, parseTranscriptUsage } = await import('../../../src/hooks/status-reporter')
+const { handleEvent, parseTranscript } = await import('../../../src/hooks/status-reporter')
 
 describe('handleEvent', () => {
   beforeEach(() => {
@@ -288,7 +288,7 @@ describe('handleEvent', () => {
   })
 })
 
-describe('parseTranscriptUsage', () => {
+describe('parseTranscript', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -297,18 +297,18 @@ describe('parseTranscriptUsage', () => {
     vi.clearAllMocks()
   })
 
-  it('returns null for missing file', async () => {
+  it('returns null usage and thinking for missing file', async () => {
     mockExistsSync.mockReturnValue(false)
 
-    const result = await parseTranscriptUsage('/nonexistent/path.jsonl')
+    const result = await parseTranscript('/nonexistent/path.jsonl')
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ usage: null, thinking: null })
   })
 
-  it('returns null for undefined path', async () => {
-    const result = await parseTranscriptUsage(undefined)
+  it('returns null usage and thinking for undefined path', async () => {
+    const result = await parseTranscript(undefined)
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ usage: null, thinking: null })
   })
 
   it('returns latest request context size, not cumulative', async () => {
@@ -333,11 +333,11 @@ describe('parseTranscriptUsage', () => {
 
     mockReadFile.mockResolvedValue(jsonlContent)
 
-    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+    const result = await parseTranscript('/path/to/transcript.jsonl')
 
     // Returns LATEST request's context, not cumulative sum
     // Last entry: 150 + 15 + 10 = 175 context, 75 output
-    expect(result).toEqual({
+    expect(result.usage).toEqual({
       context: 175,
       output: 75
     })
@@ -353,16 +353,16 @@ describe('parseTranscriptUsage', () => {
 
     mockReadFile.mockResolvedValue(jsonlContent)
 
-    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+    const result = await parseTranscript('/path/to/transcript.jsonl')
 
     // Returns latest valid entry: 200 + 30 = 230 context, 100 output
-    expect(result).toEqual({
+    expect(result.usage).toEqual({
       context: 230,
       output: 100
     })
   })
 
-  it('returns null when no token data present', async () => {
+  it('returns null usage when no token data present', async () => {
     mockExistsSync.mockReturnValue(true)
     const jsonlContent = [
       JSON.stringify({ message: { content: 'hello' } }),
@@ -371,9 +371,9 @@ describe('parseTranscriptUsage', () => {
 
     mockReadFile.mockResolvedValue(jsonlContent)
 
-    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+    const result = await parseTranscript('/path/to/transcript.jsonl')
 
-    expect(result).toBeNull()
+    expect(result.usage).toBeNull()
   })
 
   it('handles empty lines in JSONL', async () => {
@@ -387,10 +387,10 @@ describe('parseTranscriptUsage', () => {
 
     mockReadFile.mockResolvedValue(jsonlContent)
 
-    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+    const result = await parseTranscript('/path/to/transcript.jsonl')
 
     // Returns latest entry: 200 context, 100 output
-    expect(result).toEqual({
+    expect(result.usage).toEqual({
       context: 200,
       output: 100
     })
@@ -404,9 +404,9 @@ describe('parseTranscriptUsage', () => {
 
     mockReadFile.mockResolvedValue(jsonlContent)
 
-    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+    const result = await parseTranscript('/path/to/transcript.jsonl')
 
-    expect(result).toEqual({
+    expect(result.usage).toEqual({
       context: 100,
       output: 50
     })
@@ -424,10 +424,10 @@ describe('parseTranscriptUsage', () => {
 
     mockReadFile.mockResolvedValue(jsonlContent)
 
-    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+    const result = await parseTranscript('/path/to/transcript.jsonl')
 
     // Returns LATEST request (req-2): 200 + 2000 = 2200 context, 100 output
-    expect(result).toEqual({
+    expect(result.usage).toEqual({
       context: 2200,
       output: 100
     })
@@ -445,12 +445,152 @@ describe('parseTranscriptUsage', () => {
 
     mockReadFile.mockResolvedValue(jsonlContent)
 
-    const result = await parseTranscriptUsage('/path/to/transcript.jsonl')
+    const result = await parseTranscript('/path/to/transcript.jsonl')
 
     // Should return LAST entry's values (100 + 1000 = 1100), not first (10)
-    expect(result).toEqual({
+    expect(result.usage).toEqual({
       context: 1100,
       output: 50
     })
+  })
+
+  it('extracts thinking content from transcript', async () => {
+    mockExistsSync.mockReturnValue(true)
+    const jsonlContent = [
+      JSON.stringify({
+        message: {
+          usage: { input_tokens: 100, output_tokens: 50 },
+          content: [
+            { type: 'thinking', thinking: 'Let me analyze this code carefully...' }
+          ]
+        }
+      })
+    ].join('\n')
+
+    mockReadFile.mockResolvedValue(jsonlContent)
+
+    const result = await parseTranscript('/path/to/transcript.jsonl')
+
+    // 37 chars, under limit, no truncation
+    expect(result.thinking).toBe('Let me analyze this code carefully...')
+  })
+
+  it('returns latest thinking content when multiple exist', async () => {
+    mockExistsSync.mockReturnValue(true)
+    const jsonlContent = [
+      JSON.stringify({
+        message: {
+          content: [{ type: 'thinking', thinking: 'First thought' }]
+        }
+      }),
+      JSON.stringify({
+        message: {
+          content: [{ type: 'thinking', thinking: 'This is a longer second thought that exceeds the limit' }]
+        }
+      })
+    ].join('\n')
+
+    mockReadFile.mockResolvedValue(jsonlContent)
+
+    const result = await parseTranscript('/path/to/transcript.jsonl')
+
+    // Truncates at word boundary: "This is a longer second thought that" (37 chars) + "..."
+    expect(result.thinking).toBe('This is a longer second thought that...')
+  })
+
+  it('ignores text blocks and only extracts thinking blocks', async () => {
+    mockExistsSync.mockReturnValue(true)
+    const jsonlContent = [
+      JSON.stringify({
+        message: {
+          content: [
+            { type: 'text', text: 'This is user-facing response' },
+            { type: 'thinking', thinking: 'This is internal reasoning' }
+          ]
+        }
+      })
+    ].join('\n')
+
+    mockReadFile.mockResolvedValue(jsonlContent)
+
+    const result = await parseTranscript('/path/to/transcript.jsonl')
+
+    expect(result.thinking).toBe('This is internal reasoning')
+  })
+
+  it('truncates long thinking content', async () => {
+    mockExistsSync.mockReturnValue(true)
+    const longThinking = 'A'.repeat(100)
+    const jsonlContent = [
+      JSON.stringify({
+        message: {
+          content: [{ type: 'thinking', thinking: longThinking }]
+        }
+      })
+    ].join('\n')
+
+    mockReadFile.mockResolvedValue(jsonlContent)
+
+    const result = await parseTranscript('/path/to/transcript.jsonl')
+
+    expect(result.thinking).toHaveLength(43) // 40 chars + '...'
+    expect(result.thinking).toMatch(/\.\.\.$/);
+  })
+
+  it('returns null thinking when thinking is from a different request than usage', async () => {
+    mockExistsSync.mockReturnValue(true)
+    // Thinking from req-1, but latest usage is from req-2 (which has no thinking)
+    const jsonlContent = [
+      JSON.stringify({
+        requestId: 'req-1',
+        message: {
+          usage: { input_tokens: 100, output_tokens: 50 },
+          content: [{ type: 'thinking', thinking: 'Old thinking from previous request' }]
+        }
+      }),
+      JSON.stringify({
+        requestId: 'req-2',
+        message: {
+          usage: { input_tokens: 200, output_tokens: 100 }
+          // No thinking in this request
+        }
+      })
+    ].join('\n')
+
+    mockReadFile.mockResolvedValue(jsonlContent)
+
+    const result = await parseTranscript('/path/to/transcript.jsonl')
+
+    // Usage should be from req-2
+    expect(result.usage).toEqual({ context: 200, output: 100 })
+    // Thinking should be null because it's from req-1, not req-2
+    expect(result.thinking).toBeNull()
+  })
+
+  it('returns thinking when it matches the latest usage request', async () => {
+    mockExistsSync.mockReturnValue(true)
+    const jsonlContent = [
+      JSON.stringify({
+        requestId: 'req-1',
+        message: {
+          usage: { input_tokens: 100, output_tokens: 50 },
+          content: [{ type: 'thinking', thinking: 'Old thinking' }]
+        }
+      }),
+      JSON.stringify({
+        requestId: 'req-2',
+        message: {
+          usage: { input_tokens: 200, output_tokens: 100 },
+          content: [{ type: 'thinking', thinking: 'Current thinking' }]
+        }
+      })
+    ].join('\n')
+
+    mockReadFile.mockResolvedValue(jsonlContent)
+
+    const result = await parseTranscript('/path/to/transcript.jsonl')
+
+    expect(result.usage).toEqual({ context: 200, output: 100 })
+    expect(result.thinking).toBe('Current thinking')
   })
 })

@@ -35,6 +35,7 @@ The pet window will appear and float on top of other windows. It automatically u
 
 - **Reading** - Claude is reading files or searching code
 - **Working** - Claude is writing, editing, or running commands
+- **Waiting** - Claude needs your permission or has a question
 - **Idle** - Claude is waiting for input
 - **Done** - Claude finished a task
 - **Error** - Something went wrong
@@ -56,6 +57,24 @@ Claude Code (Terminal) --[hooks]--> status.json <--[watching]-- Desktop Pet (Ele
 1. When you use Claude Code, hooks send events to a status reporter script
 2. The script writes status updates to `~/.claude-companion/status.json`
 3. The Electron app watches this file and updates the pet's expression
+
+## Privacy
+
+The companion displays:
+- **Current status** - What Claude is doing (reading, writing, thinking)
+- **Thinking snippets** - Brief excerpts of Claude's internal reasoning (truncated to ~40 characters)
+- **Token counts** - Current context window usage
+
+**What is NOT captured:**
+- Claude's responses to you (only internal "thinking" blocks are read)
+- Your prompts or questions
+- File contents or code
+
+All data stays local on your machine in `~/.claude-companion/status.json` and is never sent anywhere.
+
+### Transcript Data
+
+Token counts and thinking snippets are extracted from Claude's transcript file (`~/.claude/projects/.../session.jsonl`), not from hook events. Thinking snippets only appear when using models with extended thinking enabled (like Opus).
 
 ## Building from Source
 

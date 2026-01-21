@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 /**
- * Claude Companion CLI Launcher
+ * Claude Code Companion CLI Launcher
  *
  * Launches the Electron desktop pet app as a detached process
  * so it continues running after the terminal is closed.
@@ -24,4 +24,4 @@ const child = (0, child_process_1.spawn)(electronPath, [appPath], {
 });
 // Unref to allow the parent process to exit independently
 child.unref();
-console.log('Claude Companion launched!');
+console.log('Claude Code Companion launched!');
