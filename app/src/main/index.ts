@@ -14,6 +14,7 @@ let mainWindow: BrowserWindow | null = null
 // Sticker pack definitions (id and name only - renderer has the actual assets)
 const STICKER_PACKS = [
   { id: 'bot1', name: 'Bot1' },
+  { id: 'cloud', name: 'Cloud' },
   { id: 'svg', name: 'SVG' }
 ]
 
