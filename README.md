@@ -2,7 +2,7 @@
 
 <img src="app/resources/icon.png" width="128" alt="Claude Code Companion icon">
 
-A desktop companion pet that shows Claude Code's real-time status and token usage.
+A desktop companion that lets you monitor Claude Code at a glance. See when it's done, when it needs input, and how much context you've used without having to stare at to your terminal. Also, it's cute.
 
 <img src="app/resources/companion_screenshot.png" width="200" alt="Screenshot of Claude Code Companion showing the pet with a speech bubble and token count">
 
@@ -39,10 +39,12 @@ The pet window will appear and float on top of other windows. It automatically u
 - **Done** - Claude finished a task
 - **Error** - Something went wrong
 
+The pet also displays the context window usage (input + cache tokens from the latest API call).
+
 ### Controls
 
 - **Drag** - Click and drag the pet to move it around your screen
-- **Right-click** - Change sticker pack
+- **Right-click** - Change sticker pack (2 packs currently available + basic SVG pack)
 - **Close** - Quit from the dock/taskbar or Activity Monitor/Task Manager
 
 ## How It Works
