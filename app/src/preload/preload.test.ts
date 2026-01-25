@@ -47,7 +47,9 @@ describe('preload', () => {
   it('exposes all required methods', () => {
     expect(exposedAPI).toHaveProperty('getStatus')
     expect(exposedAPI).toHaveProperty('onStatusUpdate')
-    expect(exposedAPI).toHaveProperty('startDrag')
+    expect(exposedAPI).toHaveProperty('dragStart')
+    expect(exposedAPI).toHaveProperty('dragMove')
+    expect(exposedAPI).toHaveProperty('dragEnd')
     expect(exposedAPI).toHaveProperty('getActivePack')
     expect(exposedAPI).toHaveProperty('showPackMenu')
     expect(exposedAPI).toHaveProperty('onPackChanged')
@@ -106,13 +108,29 @@ describe('preload', () => {
     })
   })
 
-  describe('startDrag', () => {
-    it('sends start-drag IPC message', () => {
-      const startDrag = exposedAPI.startDrag as () => void
+  describe('drag methods', () => {
+    it('dragStart sends drag-start IPC message with coordinates', () => {
+      const dragStart = exposedAPI.dragStart as (x: number, y: number) => void
 
-      startDrag()
+      dragStart(100, 200)
 
-      expect(mockSend).toHaveBeenCalledWith('start-drag')
+      expect(mockSend).toHaveBeenCalledWith('drag-start', { x: 100, y: 200 })
+    })
+
+    it('dragMove sends drag-move IPC message with coordinates', () => {
+      const dragMove = exposedAPI.dragMove as (x: number, y: number) => void
+
+      dragMove(150, 250)
+
+      expect(mockSend).toHaveBeenCalledWith('drag-move', { x: 150, y: 250 })
+    })
+
+    it('dragEnd sends drag-end IPC message', () => {
+      const dragEnd = exposedAPI.dragEnd as () => void
+
+      dragEnd()
+
+      expect(mockSend).toHaveBeenCalledWith('drag-end')
     })
   })
 

@@ -6,6 +6,11 @@
   align-items: center;
   justify-content: center;
   transition: opacity 0.15s ease-in-out, transform 0.3s ease-in-out;
+  cursor: grab;
+}
+
+.pet-container:active {
+  cursor: grabbing;
 }
 
 .pet-container.transitioning {

@@ -35,10 +35,31 @@ export function Pet({ state }: PetProps): ReactNode {
     window.electronAPI.showPackMenu()
   }
 
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>): void => {
+    if (e.button !== 0) return // Left click only
+    e.preventDefault()
+
+    window.electronAPI.dragStart(e.screenX, e.screenY)
+
+    const handleMouseMove = (e: globalThis.MouseEvent): void => {
+      window.electronAPI.dragMove(e.screenX, e.screenY)
+    }
+
+    const handleMouseUp = (): void => {
+      window.electronAPI.dragEnd()
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }
+
   return (
     <div
       className={`pet-container ${isTransitioning ? 'transitioning' : ''} pet-${currentState}`}
       onContextMenu={handleContextMenu}
+      onMouseDown={handleMouseDown}
     >
       {pack.type === 'svg' ? (
         pack.faces[currentState]

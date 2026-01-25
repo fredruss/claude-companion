@@ -142,10 +142,24 @@ ipcMain.handle('get-active-pack', () => {
   return activePack
 })
 
-ipcMain.on('start-drag', () => {
-  if (mainWindow) {
-    mainWindow.setIgnoreMouseEvents(false)
-  }
+// Programmatic drag state
+let dragState: { startX: number; startY: number; winX: number; winY: number } | null = null
+
+ipcMain.on('drag-start', (_event, { x, y }: { x: number; y: number }) => {
+  if (!mainWindow) return
+  const [winX, winY] = mainWindow.getPosition()
+  dragState = { startX: x, startY: y, winX, winY }
+})
+
+ipcMain.on('drag-move', (_event, { x, y }: { x: number; y: number }) => {
+  if (!mainWindow || !dragState) return
+  const newX = dragState.winX + (x - dragState.startX)
+  const newY = dragState.winY + (y - dragState.startY)
+  mainWindow.setPosition(newX, newY)
+})
+
+ipcMain.on('drag-end', () => {
+  dragState = null
 })
 
 ipcMain.on('show-pack-menu', () => {

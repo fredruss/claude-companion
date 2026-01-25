@@ -8,10 +8,4 @@
   padding-bottom: 20px;
   gap: 10px;
   user-select: none;
-  -webkit-app-region: drag;
-  cursor: grab;
-}
-
-.app-container:active {
-  cursor: grabbing;
 }
