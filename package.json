@@ -1,5 +1,5 @@
 {
-  "name": "claude-code-companion",
+  "name": "@fredruss/claude-code-companion",
   "version": "1.0.0",
   "description": "Desktop pet that shows Claude Code's real-time status",
   "bin": {
