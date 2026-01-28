@@ -1,6 +1,6 @@
 {
   "name": "@fredruss/claude-code-companion",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Desktop pet that shows Claude Code's real-time status",
   "bin": {
     "claude-companion": "./bin/claude-companion.js"
@@ -41,6 +41,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "chokidar": "^5.0.0",
     "electron": "^40.0.0"
   },
   "devDependencies": {
