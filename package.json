@@ -11,7 +11,7 @@
     "prepublishOnly": "npm run build && cd app && npm run lint && cd .. && npm run test:run",
     "dev": "cd app && npm run dev",
     "build:scripts": "tsc -p tsconfig.scripts.json",
-    "build": "npm run build:scripts && cd app && npm run build && rm -rf ../out && cp -r out ..",
+    "build": "npm run build:scripts && cd app && npm run build && rm -rf ../out && cp -r out .. && cp resources/icon.png ../out/",
     "test": "npm run test:scripts && cd app && npm test",
     "test:run": "npm run test:scripts:run && cd app && npm run test:run",
     "test:scripts": "vitest --config vitest.config.ts",

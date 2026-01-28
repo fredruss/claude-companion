@@ -175,7 +175,7 @@ app.whenReady().then(async () => {
 
   // Set custom dock icon on macOS
   if (process.platform === 'darwin') {
-    const iconPath = join(__dirname, '../../resources/icon.png')
+    const iconPath = join(__dirname, '../icon.png')
     if (existsSync(iconPath)) {
       const icon = nativeImage.createFromPath(iconPath)
       app.dock.setIcon(icon)
