@@ -7,7 +7,7 @@ app/out/
 app/dist/
 
 # Compiled TypeScript intermediate (not needed at runtime)
-shared/
+/shared/
 
 # Logs
 *.log
