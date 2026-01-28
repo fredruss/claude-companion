@@ -18,6 +18,7 @@
     "test:scripts:run": "vitest run --config vitest.config.ts"
   },
   "files": [
+    "README.md",
     "bin/",
     "scripts/",
     "hooks/",
