@@ -19,7 +19,13 @@ A desktop companion that lets you monitor Claude Code. See when it's done, when 
 npm install -g @fredruss/claude-code-companion
 ```
 
-This installs the app and prompts to configure Claude Code hooks. Then run:
+This installs the app and prompts to configure Claude Code hooks. If the prompt was skipped (e.g., piped install), run:
+
+```bash
+claude-companion setup
+```
+
+Then launch the app:
 
 ```bash
 claude-companion
@@ -121,7 +127,7 @@ Check that the hooks are configured in `~/.claude/settings.json`:
 cat ~/.claude/settings.json | grep claude-companion
 ```
 
-If hooks are missing, run `node bin/claude-companion.js setup` from the project root to configure them.
+If hooks are missing, run `claude-companion setup` to configure them.
 
 ### Pet window doesn't appear
 
