@@ -71,6 +71,47 @@ function launchApp(): void {
 }
 
 function stopApp(): void {
+  if (process.platform === 'win32') {
+    stopAppWindows()
+  } else {
+    stopAppUnix()
+  }
+}
+
+function stopAppWindows(): void {
+  try {
+    // Pattern matches both local dev (claude-companion) and npm-installed (claude-code-companion)
+    const pattern = '%companion%out%main%index.js%'
+
+    // Check if any matching processes exist using WMIC
+    const checkResult = execSync(
+      `wmic process where "CommandLine like '${pattern}'" get ProcessId 2>nul`,
+      { encoding: 'utf-8' }
+    )
+
+    // WMIC returns just header "ProcessId" with whitespace if no matches
+    const hasProcess =
+      checkResult
+        .split('\n')
+        .filter((line) => line.trim() && !/ProcessId/i.test(line)).length > 0
+
+    if (!hasProcess) {
+      console.log('Claude Code Companion is not running.')
+      return
+    }
+
+    // Kill the processes
+    execSync(
+      `wmic process where "CommandLine like '${pattern}'" delete`,
+      { stdio: 'ignore' }
+    )
+    console.log('Claude Code Companion stopped.')
+  } catch {
+    console.log('Claude Code Companion is not running.')
+  }
+}
+
+function stopAppUnix(): void {
   try {
     // Kill Electron processes running claude-companion
     // Match the app path argument: .../claude-code-companion/out/main/index.js
