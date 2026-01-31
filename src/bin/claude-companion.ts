@@ -70,7 +70,7 @@ function launchApp(): void {
   console.log('Claude Code Companion launched!')
 }
 
-function stopApp(): void {
+export function stopApp(): void {
   if (process.platform === 'win32') {
     stopAppWindows()
   } else {
@@ -78,7 +78,7 @@ function stopApp(): void {
   }
 }
 
-function stopAppWindows(): void {
+export function stopAppWindows(): void {
   try {
     // Pattern matches both local dev (claude-companion) and npm-installed (claude-code-companion)
     const pattern = '*companion*out*main*index.js*'
@@ -113,7 +113,7 @@ function stopAppWindows(): void {
   }
 }
 
-function stopAppUnix(): void {
+export function stopAppUnix(): void {
   try {
     // Kill Electron processes running claude-companion
     // Match the app path argument: .../claude-code-companion/out/main/index.js
